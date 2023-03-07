@@ -125,8 +125,7 @@ fn main()
             else if args.len() < 5
             {
                 println!("enter your public key filename as a follow up to the senders public key arg");
-                exit(1);//should be able to get private key q from here, if q doesnt properly decrypt stack trace the
-                        //original ElGamal program and coordinate the public / private keys better
+                exit(1);
             }
             else
             {
@@ -152,8 +151,6 @@ fn main()
                         currentline = String::new();
                     }
                 }
-                //since channel q is used to generate the private key you can rely on the q from
-                //keyfile to decrypt, if thats the wrong q the decryption will fail
                 let q = BigInt::from_str(&j["q"].as_str().unwrap()).unwrap();
                 let decryption = String::from_iter(decrypt(Encryption, SenderPublicKey.clone(), MyPrivateDecryptionKey.clone(), q));
                 dbg!(&decryption);
