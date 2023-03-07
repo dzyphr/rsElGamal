@@ -219,7 +219,7 @@ fn cyclicGroupCheck(q: BigInt, k: BigInt) -> BigInt //check that the large rando
     }
 }
 
-fn keyGen(q: BigInt, g: BigInt) -> (BigInt, BigInt)
+fn keyGen(q: BigInt, g: BigInt) -> (BigInt, BigInt) //returns (privkey, pubkey)
 {
     let big1 = BigInt::from_u64(1).unwrap();
     let lower_bound = big_pow(BigInt::from(10), BigInt::from(20));
@@ -247,8 +247,8 @@ fn keyGen(q: BigInt, g: BigInt) -> (BigInt, BigInt)
             exit(1);
         }
     }
-    assert!(key.clone() != q.clone()); //user secret is not shared secret / channel value
-    return (key.clone(), modexp_fast_internal_copy(g, key.clone(), q)) //generator, key, channel makes pubkey
+    assert!(key.clone() != q.clone()); 
+    return (key.clone(), modexp_fast_internal_copy(g, key.clone(), q)) 
 }
 
 pub fn big_pow(base: BigInt, exp: BigInt) -> BigInt
