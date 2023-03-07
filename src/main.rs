@@ -39,7 +39,6 @@ fn main()
     {
         if args[1].to_string() == "genPubKey".to_string() //TODO:from specify q and g (for ElGamal "channel")
         {
-            //q is "semi-private" channel value
             let (privKey, pubKey) = keyGen(q.clone(), g.clone());
             let mut filename =  String::new();
             let mut i = 0;
@@ -337,7 +336,7 @@ fn big_is_prime(n: &BigInt) -> bool //semi probabalistic miller-rabin primality 
         {
             return false;
         }
-    }
+    } 
     return true
 }
 
