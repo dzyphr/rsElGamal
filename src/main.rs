@@ -12,13 +12,16 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
-                                                
-use serde_json::{Value};
-use primal::{StreamingSieve, Primes, Sieve};
-use ramp::{traits::Integer, int::Int};
-use std::{io::{Read, Write, LineWriter}, path::Path, fs, collections::HashMap, 
+#![allow(non_snake_case)]
+#![allow(unused_parens)]
+use primal::{Sieve};
+use ramp::{traits::Integer};
+use std::{
+    io::{Read, Write, LineWriter}, 
+    path::Path, fs, 
     env, process::exit, fs::File, 
-    str::FromStr, collections::HashSet, num};
+    str::FromStr
+};
 use num_bigint::{BigInt, ToBigInt, RandBigInt};
 use num_traits::{cast::FromPrimitive, ToPrimitive};
 fn main() 
@@ -42,7 +45,7 @@ fn main()
         if args[1].to_string() == "genPubKey".to_string() //TODO:from specify q and g (for ElGamal "channel")
         {
             let (privKey, pubKey) = keyGen(q.clone(), g.clone());
-            let mut filename =  String::new();
+            let filename: String;
             let mut i = 0;
             loop
             {
@@ -95,12 +98,10 @@ fn main()
                 file.read_to_string(&mut contents).expect("error reading keyfile contents");
                 let json: serde_json::Value =
                     serde_json::from_str(&contents).expect("JSON was not well-formatted");
-                let senderPubkey = &json["Public Key"].as_str().unwrap().parse::<BigInt>().unwrap();
                 let privateKey = &json["Private Key"].as_str().unwrap().parse::<BigInt>().unwrap();
                                                     // https://en.wikipedia.org/wiki/Decisional_Diffie%E2%80%93Hellman_assumption
                 let q = &json["q"].as_str().unwrap().parse::<BigInt>().unwrap();
-                let g = &json["g"].as_str().unwrap().parse::<BigInt>().unwrap();
-                let (encryption) = encrypt(message.to_string(), q.clone(), receiver.clone(), g.clone(), privateKey.clone());
+                let encryption = encrypt(message.to_string(), q.clone(), receiver.clone(), privateKey.clone());
                 let file = File::create("TestElGamalMessage.ElGamalMsg").expect("err creating file");
                 let mut file = LineWriter::new(file);
                 let mut format = String::new();
@@ -108,7 +109,7 @@ fn main()
                 {
                     format.push_str(&(line.to_string() + "\n"));
                 }
-                file.write_all(format.as_bytes());
+                let _result = file.write_all(format.as_bytes());
             }
         }
         else if args[1].to_string() == "decryptFromPubKey".to_string()
@@ -133,9 +134,9 @@ fn main()
                 let EncryptedMsgFilename = args[2].to_string();
                 let SenderPublicKey = &args[3].to_string().parse::<BigInt>().unwrap();
                 let MyReceivingPubKey = args[4].to_string();
-                let mut filename = MyReceivingPubKey.clone().to_string() + ".ElGamalKey";
-                let mut contents = fs::read_to_string(filename).expect("file not found");
-                let mut j : serde_json::Value = serde_json::from_str(&contents).expect("JSON was not well-formatted");
+                let filename = MyReceivingPubKey.clone().to_string() + ".ElGamalKey";
+                let contents = fs::read_to_string(filename).expect("file not found");
+                let j : serde_json::Value = serde_json::from_str(&contents).expect("JSON was not well-formatted");
                 let MyPrivateDecryptionKey = &j["Private Key"].as_str().unwrap().parse::<BigInt>().unwrap();
                 let EncryptedMsg = fs::read_to_string(EncryptedMsgFilename + ".ElGamalMsg").expect("file not found");
                 let mut Encryption = Vec::<BigInt>::new();
@@ -173,10 +174,9 @@ fn gen_G(q: BigInt) -> BigInt
         }
         g = RandBigInt::gen_bigint_range(&mut rand::thread_rng(), &lower.clone(), &higher.clone());
     }
-    return g
 }
 
-fn encrypt(message: String, q: BigInt, h: BigInt, g: BigInt, k: BigInt) -> (Vec<BigInt>)
+fn encrypt(message: String, q: BigInt, h: BigInt, k: BigInt) -> Vec<BigInt>
 {
     let mut encryption: Vec<BigInt> = vec![];
     let mut preEncryption: Vec<char>  = vec![]; 
@@ -189,7 +189,7 @@ fn encrypt(message: String, q: BigInt, h: BigInt, g: BigInt, k: BigInt) -> (Vec<
     {
         encryption.push(s.clone() * preEncryption[i] as u32);
     }
-    return (encryption)
+    return encryption
 }
 
 fn decrypt(encryption: Vec<BigInt>, p: BigInt, key: BigInt, q: BigInt) -> Vec<char>
