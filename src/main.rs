@@ -16,7 +16,9 @@
 use serde_json::{Value};
 use primal::{StreamingSieve, Primes, Sieve};
 use ramp::{traits::Integer, int::Int};
-use std::{io::LineWriter, path::Path, fs, {collections::HashMap}, io::Read, env, process::exit, {fs::File, io::Write}, str::FromStr, collections::HashSet, num};
+use std::{io::{Read, Write, LineWriter}, path::Path, fs, collections::HashMap, 
+    env, process::exit, fs::File, 
+    str::FromStr, collections::HashSet, num};
 use num_bigint::{BigInt, ToBigInt, RandBigInt};
 use num_traits::{cast::FromPrimitive, ToPrimitive};
 fn main() 
@@ -377,7 +379,7 @@ pub fn pow_mod_Montgomery_Ladder(base: &BigInt, exp: &BigInt, m: &BigInt) -> Big
 
         (gcd, x, y)
     }
-    fn mod_inverse(a: &BigInt, m: &BigInt) -> Option<BigInt> 
+    fn mod_inverse(a: &BigInt, m: &BigInt) -> Option<BigInt> //TODO: use this Some None return -> Option<SomeT> style more
     {
         let (gcd, x, _) = egcd(a, m);
         if gcd == BigInt::from_u32(1 ).unwrap()

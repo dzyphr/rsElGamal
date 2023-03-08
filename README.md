@@ -1,4 +1,4 @@
-# rsEGamal
+# rsElGamal
 
 ## ElGamal Encryption Decryption And Key Generation Implemented in Rust
 
