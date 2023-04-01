@@ -88,12 +88,18 @@ fn main()
                 println!("enter the message you want to encrypt as a followup arg to your pubkey");
                 exit(1);
             }
+            else if args.len() < 6
+            {
+                println!("enter the path to save the encryption to last");
+                exit(1);
+            }
             else
             {
                 let receiver = &args[2].to_string().parse::<BigInt>().unwrap();
                 let message = args[4].to_string();
                 let myPubKeyStr = args[3].to_string(); //go into pubkey file find privatekey json key assign to q
-                let mut file = File::open(myPubKeyStr.clone() + ".ElGamalKey").expect("cant find file");
+                let path  = args[5].to_string();
+                let mut file = File::open(myPubKeyStr.clone()).expect("cant find file");
                 let mut contents = String::new();
                 file.read_to_string(&mut contents).expect("error reading keyfile contents");
                 let json: serde_json::Value =
@@ -102,7 +108,7 @@ fn main()
                                                     // https://en.wikipedia.org/wiki/Decisional_Diffie%E2%80%93Hellman_assumption
                 let q = &json["q"].as_str().unwrap().parse::<BigInt>().unwrap();
                 let encryption = encrypt(message.to_string(), q.clone(), receiver.clone(), privateKey.clone());
-                let file = File::create("TestElGamalMessage.ElGamalMsg").expect("err creating file");
+                let file = File::create(path).expect("err creating file");
                 let mut file = LineWriter::new(file);
                 let mut format = String::new();
                 for line in encryption
@@ -134,11 +140,12 @@ fn main()
                 let EncryptedMsgFilename = args[2].to_string();
                 let SenderPublicKey = &args[3].to_string().parse::<BigInt>().unwrap();
                 let MyReceivingPubKey = args[4].to_string();
-                let filename = MyReceivingPubKey.clone().to_string() + ".ElGamalKey";
+                let filename = MyReceivingPubKey.clone().to_string();
                 let contents = fs::read_to_string(filename).expect("file not found");
                 let j : serde_json::Value = serde_json::from_str(&contents).expect("JSON was not well-formatted");
                 let MyPrivateDecryptionKey = &j["Private Key"].as_str().unwrap().parse::<BigInt>().unwrap();
-                let EncryptedMsg = fs::read_to_string(EncryptedMsgFilename + ".ElGamalMsg").expect("file not found");
+//                dbg!(&EncryptedMsgFilename);
+                let EncryptedMsg = fs::read_to_string(EncryptedMsgFilename).expect("file not found");
                 let mut Encryption = Vec::<BigInt>::new();
                 let mut currentline = String::new();
                 for c in EncryptedMsg.chars()
@@ -155,7 +162,7 @@ fn main()
                 }
                 let q = BigInt::from_str(&j["q"].as_str().unwrap()).unwrap();
                 let decryption = String::from_iter(decrypt(Encryption, SenderPublicKey.clone(), MyPrivateDecryptionKey.clone(), q));
-                dbg!(&decryption);
+                println!("{}", &decryption);
             }
         }
     }
@@ -288,7 +295,7 @@ pub fn modexp_fast_internal_copy(mut b: BigInt, mut e: BigInt, m: BigInt) -> Big
 
 fn big_is_prime(n: &BigInt) -> bool //semi probabalistic miller-rabin primality test
 {
-    if n.is_even() {return false};
+    if n.is_even() {return false}; //this throws away 2 but it doesn't matter because it is for big integers
     
     let low_primes = vec![2, 3, 5, 7, 11, 13, 17, 19];
     for &prime in &low_primes
@@ -344,7 +351,7 @@ fn big_is_prime(n: &BigInt) -> bool //semi probabalistic miller-rabin primality 
 
 pub fn pow_mod_Montgomery_Ladder(base: &BigInt, exp: &BigInt, m: &BigInt) -> BigInt //speedy sidechannel attack resistant modexp
 {
-    if !big_is_prime(m) || m.is_even() {
+    if !big_is_prime(m) { //implicitly checks for even value
         return BigInt::from_u32(1).unwrap();
     }
     let one = 1_u32.to_bigint().unwrap();
