@@ -86,7 +86,8 @@ fn main()
             }
             else if args.len() < 5
             {
-                println!("enter the message you want to encrypt as a followup arg to your pubkey");
+//                println!("enter the message you want to encrypt as a followup arg to your pubkey");
+                println!("enter the FILEPATH of the message you want to encrypt as a followup arg to your pubkey");                
                 exit(1);
             }
             else if args.len() < 6
@@ -97,7 +98,7 @@ fn main()
             else
             {
                 let receiver = &args[2].to_string().parse::<BigInt>().unwrap();
-                let message = args[4].to_string();
+                let messagePATH = args[4].to_string();
                 let myPubKeyStr = args[3].to_string(); //go into pubkey file find privatekey json key assign to q
                 let path  = args[5].to_string();
                 let mut file = File::open(myPubKeyStr.clone()).expect("cant find file");
@@ -108,6 +109,8 @@ fn main()
                 let privateKey = &json["Private Key"].as_str().unwrap().parse::<BigInt>().unwrap();
                                                     // https://en.wikipedia.org/wiki/Decisional_Diffie%E2%80%93Hellman_assumption
                 let q = &json["q"].as_str().unwrap().parse::<BigInt>().unwrap();
+                let message = fs::read_to_string(messagePATH)
+                            .expect("cannot read file at messagePATH");
                 let encryption = encrypt(message.to_string(), q.clone(), receiver.clone(), privateKey.clone());
                 let file = File::create(path).expect("err creating file");
                 let mut file = LineWriter::new(file);
