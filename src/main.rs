@@ -22,6 +22,8 @@ use std::{
     env, process::exit, fs::File, 
     str::FromStr
 };
+mod big_prime;
+use big_prime::{gen_big_prime};
 use num_bigint::{BigInt, ToBigInt, RandBigInt};
 use num_traits::{cast::FromPrimitive, ToPrimitive};
 fn main() 
@@ -32,19 +34,60 @@ fn main()
     //g needs to be known by both parties so will be public q as well,TODO: they should ideally check
     //these are primes before starting
 //    let qstr = "24203810936489328066547711667750107305261714914281111737465409072411360781912473629390035989284760774475351328169623492689358825716725322053633688962517752300713468965010218001785476619061243608516794275775259574466779369559551109409929965466188903169176545928414494211419486097672580732413464620776696654721315502309434102007050909879953004082937683105226142055332736787264339328539810852786809156578043499811001177790783336344925377101557840105513558508778558821871979111653966865503556094743822351152893808391024165885299519778722879162981089600296511241762712218864086216300212830853124558089728811378148635803099"; //2048 bit
-    let qstr = "1262342663925650003046398789530589609150796109243129113542884661639194750076875153774705327344099362968670425466670499217052594040088807634171902977694295680229634046045492090802786287751742800436598552123798622069908405112485695895424944178949821225390131538025215323004573912440282895661999430715173999993729486671299301312333500322475975045812506682180610404454710293545515472254977095400867810305562889"; //1346bit prime https://crypto.stackexchange.com/questions/105511/what-bitlength-should-i-use-for-generating-primes-for-a-elgamal-encryption-cycli
-    let q = qstr.parse::<BigInt>().unwrap();
-    let g = gen_G(q.clone());
+//    let qstr = "1262342663925650003046398789530589609150796109243129113542884661639194750076875153774705327344099362968670425466670499217052594040088807634171902977694295680229634046045492090802786287751742800436598552123798622069908405112485695895424944178949821225390131538025215323004573912440282895661999430715173999993729486671299301312333500322475975045812506682180610404454710293545515472254977095400867810305562889"; //1346bit prime https://crypto.stackexchange.com/questions/105511/what-bitlength-should-i-use-for-generating-primes-for-a-elgamal-encryption-cycli
+//    let q = qstr.parse::<BigInt>().unwrap();
     //interesting new diffie hellman hardness assumption w ElGamal: https://eprint.iacr.org/2023/314.pdf
     let args: Vec<String> = env::args().collect();
     if args.len() < 2
     {
-        println!("provide argument!\n Choices:\ngenPubKey\nencryptToPubKey\ndecryptFromPubKey");
+        println!("provide argument!\n Choices:\ngenPubKey\ngenPubKey_specific_q_g\nencryptToPubKey\ndecryptFromPubKey");
     }
     else if args.len() >= 2
     {
-        if args[1].to_string() == "genPubKey".to_string() //TODO:from specify q and g (for ElGamal "channel")
+        if args[1].to_string() == "genPubKey_specific_q_g".to_string() //TODO:from specify q and g (for ElGamal "channel")
         {
+            if args.len() >= 4
+            {
+                let qstr = args[2].to_string();
+                let q = qstr.parse::<BigInt>().expect("error unwrapping specified q value into u64");
+                let gstr = args[3].to_string();
+                let g = gstr.parse::<BigInt>().expect("error unwrapping specified g value into u64");
+                let (privKey, pubKey) = keyGen(q.clone(), g.clone());
+                let filename: String;
+                let mut i = 0;
+                loop
+                {
+                    let istr = i.to_string();
+                    if Path::new(&("Key".to_owned() + &istr + ".ElGamalKey")).exists() == false
+                    {
+                        filename =  "Key".to_owned() + &istr + ".ElGamalKey";
+                        break;
+                    }
+                    else
+                    {
+                        i = i + 1;
+                        continue
+                    }
+                }
+                let mut file = File::create(filename.clone()).expect("error setting up filehandle");
+                let format ="{\n".to_owned() +
+                                &"\t\"Public Key\": \"".to_owned() + &pubKey.to_string() + "\",\n" +
+                                &"\t\"Private Key\": \"" + &privKey.to_string() + "\",\n" +
+                                &"\t\"q\": \"" + &q.to_string() + "\",\n" +
+                                &"\t\"g\": \"" + &g.to_string() + "\"" +
+                            "\n}";
+                file.write_all(format.as_bytes()).expect("error writing to file");
+                println!("{}", filename);
+            }
+            else
+            {
+                println!("must include both q and g as followup arguments when using `genPubKey_specific_q_g`");
+            }
+        }
+        else if args[1].to_string() == "genPubKey".to_string() //TODO:from specify q and g (for ElGamal "channel")
+        {
+            let q = gen_big_prime(1364); //generate a random big prime
+            let g = gen_G(q.clone());
             let (privKey, pubKey) = keyGen(q.clone(), g.clone());
             let filename: String;
             let mut i = 0;
