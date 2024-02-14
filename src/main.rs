@@ -44,7 +44,46 @@ fn main()
     }
     else if args.len() >= 2
     {
-        if args[1].to_string() == "genPubKey_specific_q_g".to_string() //TODO:from specify q and g (for ElGamal "channel")
+        if args[1].to_string() == "genPubKey_specific_q".to_string()
+        {
+            if args.len() >= 3
+            {
+                let qstr = args[2].to_string();
+                let q = qstr.parse::<BigInt>().expect("error unwrapping specified q value into u64");
+                let g = gen_G(q.clone());
+                let (privKey, pubKey) = keyGen(q.clone(), g.clone());
+                let filename: String;
+                let mut i = 0;
+                loop
+                {
+                    let istr = i.to_string();
+                    if Path::new(&("Key".to_owned() + &istr + ".ElGamalKey")).exists() == false
+                    {
+                        filename =  "Key".to_owned() + &istr + ".ElGamalKey";
+                        break;
+                    }
+                    else
+                    {
+                        i = i + 1;
+                        continue
+                    }
+                }
+                let mut file = File::create(filename.clone()).expect("error setting up filehandle");
+                let format ="{\n".to_owned() +
+                                &"\t\"Public Key\": \"".to_owned() + &pubKey.to_string() + "\",\n" +
+                                &"\t\"Private Key\": \"" + &privKey.to_string() + "\",\n" +
+                                &"\t\"q\": \"" + &q.to_string() + "\",\n" +
+                                &"\t\"g\": \"" + &g.to_string() + "\"" +
+                            "\n}";
+                file.write_all(format.as_bytes()).expect("error writing to file");
+                println!("{}", filename);
+            }
+            else
+            {
+                println!("must specify q as followup argument when using `genPubKey_specific_q`");
+            }
+        }
+        else if args[1].to_string() == "genPubKey_specific_q_g".to_string() //TODO:from specify q and g (for ElGamal "channel")
         {
             if args.len() >= 4
             {
